@@ -1,0 +1,10 @@
+[package]
+name = "assignment1"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+minifb.workspace = true
+anyhow.workspace = true
+nalgebra-glm.workspace = true
+bitflags.workspace = true
