@@ -94,6 +94,7 @@ impl Rasterizer {
     }
 
     pub fn set_pixel(&mut self, x: u32, y: u32, color: Vec3, depth: f32) {
+        let y = self.height - y - 1; // flip y
         if x < self.width && y < self.height {
             let index = (y * self.width + x) as usize;
             if depth < self.depth_buf[index] {
