@@ -6,6 +6,7 @@ members = [
 
 [workspace.dependencies]
 minifb = "0.25"
-anyhow = "1"
 nalgebra-glm = "0.18"
 bitflags = "2"
+image = "0.25"
+bytemuck = "1.14"

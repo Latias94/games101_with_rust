@@ -1,3 +1,4 @@
+use crate::color::Color;
 use nalgebra_glm::{Vec2, Vec3, Vec4};
 
 #[derive(Debug, Clone)]
@@ -6,7 +7,7 @@ pub struct Triangle {
     // counterclockwise order
     pub v: Vec<Vec3>,
     /// color at each vertex
-    pub color: Vec<Vec3>,
+    pub color: Vec<Color>,
     /// texture u,v
     pub tex_coords: Vec<Vec2>,
     /// normal vector for each vertex
@@ -17,7 +18,7 @@ impl Default for Triangle {
     fn default() -> Self {
         Self {
             v: vec![Vec3::zeros(); 3],
-            color: vec![Vec3::zeros(); 3],
+            color: vec![Color::BLACK; 3],
             tex_coords: vec![Vec2::zeros(); 3],
             normal: vec![Vec3::zeros(); 3],
         }
@@ -52,8 +53,8 @@ impl Triangle {
         self.tex_coords[index] = Vec2::new(s, t);
     }
 
-    pub fn set_color(&mut self, index: usize, r: f32, g: f32, b: f32) {
-        self.color[index] = Vec3::new(r, g, b);
+    pub fn set_color(&mut self, index: usize, color: Color) {
+        self.color[index] = color;
     }
 
     pub fn to_vector4(&self) -> [Vec4; 3] {

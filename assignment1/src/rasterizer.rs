@@ -1,3 +1,4 @@
+use crate::color::Color;
 use crate::triangle::Triangle;
 use bitflags::bitflags;
 use nalgebra_glm::{vec4, Mat4, Vec3, Vec4};
@@ -6,7 +7,7 @@ use std::collections::HashMap;
 pub struct Rasterizer {
     width: u32,
     height: u32,
-    frame_buf: Vec<u32>, // for convenience, we use Vec4 instead of Vec3
+    frame_buf: Vec<Color>,
     depth_buf: Vec<f32>,
     model: Mat4,
     view: Mat4,
@@ -14,6 +15,7 @@ pub struct Rasterizer {
     pos_buf: HashMap<u32, Vec<Vec3>>,
     ind_buf: HashMap<u32, Vec<Vec3>>,
     next_id: u32,
+    clear_color: Color,
 }
 
 pub enum Primitive {
@@ -40,7 +42,7 @@ pub struct IndBufId {
 
 impl Rasterizer {
     pub fn new(width: u32, height: u32) -> Self {
-        let frame_buf = vec![0u32; (width * height) as usize];
+        let frame_buf = vec![Color::BLACK; (width * height) as usize];
         let depth_buf = vec![f32::MAX; (width * height) as usize];
         let model = Mat4::identity();
         let view = Mat4::identity();
@@ -59,6 +61,7 @@ impl Rasterizer {
             pos_buf,
             ind_buf,
             next_id,
+            clear_color: Color::BLACK,
         }
     }
 
@@ -86,19 +89,12 @@ impl Rasterizer {
         self.projection = projection;
     }
 
-    fn color_to_u32(color: Vec3) -> u32 {
-        let r = (color.x) as u32;
-        let g = (color.y) as u32;
-        let b = (color.z) as u32;
-        (r << 16) | (g << 8) | b
-    }
-
-    pub fn set_pixel(&mut self, x: u32, y: u32, color: Vec3, depth: f32) {
+    pub fn set_pixel(&mut self, x: u32, y: u32, color: Color, depth: f32) {
         let y = self.height - y - 1; // flip y
         if x < self.width && y < self.height {
             let index = (y * self.width + x) as usize;
             if depth < self.depth_buf[index] {
-                self.frame_buf[index] = Self::color_to_u32(color);
+                self.frame_buf[index] = color;
                 self.depth_buf[index] = depth;
             }
         }
@@ -106,7 +102,7 @@ impl Rasterizer {
 
     pub fn clear(&mut self, buffers: Buffers) {
         if buffers.contains(Buffers::COLOR) {
-            self.frame_buf.fill(0);
+            self.frame_buf.fill(self.clear_color);
         }
         if buffers.contains(Buffers::DEPTH) {
             self.depth_buf.fill(f32::MAX);
@@ -149,9 +145,9 @@ impl Rasterizer {
                     for (i, vertex) in v.iter().enumerate() {
                         t.set_vertex(i, Vec3::new(vertex.x, vertex.y, vertex.z));
                     }
-                    t.set_color(0, 255f32, 0f32, 0f32);
-                    t.set_color(1, 0f32, 255f32, 0f32);
-                    t.set_color(2, 0f32, 0f32, 255f32);
+                    t.set_color(0, Color::RED);
+                    t.set_color(1, Color::GREEN);
+                    t.set_color(2, Color::BLUE);
                     self.rasterize_wireframe(&t);
                 }
             }
@@ -161,12 +157,20 @@ impl Rasterizer {
         }
     }
 
-    pub fn framebuffer(&self) -> &[u32] {
+    pub fn framebuffer(&self) -> &[Color] {
         &self.frame_buf
     }
 
+    pub fn framebuffer_u32(&self) -> &[u32] {
+        bytemuck::cast_slice(&self.frame_buf)
+    }
+
+    pub fn framebuffer_u8(&self) -> &[u8] {
+        bytemuck::cast_slice(&self.frame_buf)
+    }
+
     // bresenhams line algorithm
-    fn draw_line(&mut self, begin: Vec3, end: Vec3, color: Vec3) {
+    fn draw_line(&mut self, begin: Vec3, end: Vec3, color: Color) {
         let mut x0 = begin.x as i32;
         let mut y0 = begin.y as i32;
         let mut x1 = end.x as i32;
@@ -218,5 +222,20 @@ impl Rasterizer {
         let id = self.next_id;
         self.next_id += 1;
         id
+    }
+
+    pub fn save_framebuffer_to_png(&self, file_path: &str) -> image::ImageResult<()> {
+        let width = self.width;
+        let height = self.height;
+
+        let buffer = self.framebuffer_u8();
+        image::save_buffer(
+            file_path,
+            buffer,
+            width,
+            height,
+            image::ExtendedColorType::Rgba8,
+        )?;
+        Ok(())
     }
 }
