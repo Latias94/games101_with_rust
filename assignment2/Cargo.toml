@@ -1,0 +1,11 @@
+[package]
+name = "assignment2"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+minifb.workspace = true
+nalgebra-glm.workspace = true
+bitflags.workspace = true
+image.workspace = true
+bytemuck = { workspace = true, features = ["derive"] }
