@@ -61,7 +61,7 @@ impl Triangle {
         self.color[0]
     }
 
-    pub fn color_by_barycentric2d(&self, alpha: f32, beta: f32, gamma: f32) -> Color {
+    pub fn color_by_barycentric(&self, alpha: f32, beta: f32, gamma: f32) -> Color {
         self.color[0] * alpha + self.color[1] * beta + self.color[2] * gamma
     }
 

@@ -308,7 +308,8 @@ impl Rasterizer {
                     let z_interpolated = z_interpolated * w_reciprocal;
 
                     // set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
-                    let color = t.color();
+                    // let color = t.color();
+                    let color = t.color_by_barycentric(alpha, beta, gamma);
                     self.set_pixel(x, y, color, z_interpolated);
                 }
             }

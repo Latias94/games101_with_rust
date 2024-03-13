@@ -39,10 +39,11 @@ fn main() {
 
     let ind = [vec3(0.0, 1.0, 2.0), vec3(3.0, 4.0, 5.0)].to_vec();
 
+    // try to use different colors
     let cols = [
-        Color::new_rgb(217, 238, 185),
-        Color::new_rgb(217, 238, 185),
-        Color::new_rgb(217, 238, 185),
+        Color::new_rgb(0, 0, 255),
+        Color::new_rgb(0, 255, 0),
+        Color::new_rgb(255, 0, 0),
         Color::new_rgb(185, 217, 238),
         Color::new_rgb(185, 217, 238),
         Color::new_rgb(185, 217, 238),
