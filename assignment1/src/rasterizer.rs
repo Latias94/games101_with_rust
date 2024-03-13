@@ -170,7 +170,7 @@ impl Rasterizer {
     }
 
     // bresenhams line algorithm
-    fn draw_line(&mut self, begin: Vec3, end: Vec3, color: Color) {
+    pub fn draw_line(&mut self, begin: Vec3, end: Vec3, color: Color) {
         let mut x0 = begin.x as i32;
         let mut y0 = begin.y as i32;
         let mut x1 = end.x as i32;

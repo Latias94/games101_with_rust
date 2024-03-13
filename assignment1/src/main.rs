@@ -1,6 +1,6 @@
-use assignment1::rasterizer::{Buffers, Primitive, Rasterizer};
+use assignment1::rasterizer::{Buffers, IndBufId, PosBufId, Primitive, Rasterizer};
 use minifb::{Key, Window, WindowOptions};
-use nalgebra_glm::{vec3, Mat4, Vec3};
+use nalgebra_glm::{vec3, Mat4, TVec3, Vec3};
 use std::env;
 
 const WIDTH: usize = 700;
@@ -36,16 +36,7 @@ fn main() {
 
     // render to file
     if command_line {
-        rasterizer.clear(Buffers::all());
-        rasterizer.set_model(get_model_matrix(angle));
-        rasterizer.set_view(get_view_matrix(eye_pos));
-        rasterizer.set_projection(get_projection_matrix(
-            45.0,
-            WIDTH as f32 / HEIGHT as f32,
-            0.1,
-            50.0,
-        ));
-        rasterizer.draw(pos_id, ind_id, Primitive::Triangle);
+        draw(&mut rasterizer, angle, eye_pos, pos_id, ind_id);
         rasterizer.save_framebuffer_to_png(filename).unwrap();
         return;
     }
@@ -63,16 +54,7 @@ fn main() {
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
     // let mut buffer = vec![0u32; WIDTH * HEIGHT];
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        rasterizer.clear(Buffers::all());
-        rasterizer.set_model(get_model_matrix(angle));
-        rasterizer.set_view(get_view_matrix(eye_pos));
-        rasterizer.set_projection(get_projection_matrix(
-            45.0,
-            WIDTH as f32 / HEIGHT as f32,
-            0.1,
-            50.0,
-        ));
-        rasterizer.draw(pos_id, ind_id, Primitive::Triangle);
+        draw(&mut rasterizer, angle, eye_pos, pos_id, ind_id);
         let buffer = rasterizer
             .framebuffer()
             .iter()
@@ -87,6 +69,25 @@ fn main() {
             angle -= 0.1;
         }
     }
+}
+
+fn draw(
+    rasterizer: &mut Rasterizer,
+    angle: f32,
+    eye_pos: TVec3<f32>,
+    pos_id: PosBufId,
+    ind_id: IndBufId,
+) {
+    rasterizer.clear(Buffers::all());
+    rasterizer.set_model(get_model_matrix(angle));
+    rasterizer.set_view(get_view_matrix(eye_pos));
+    rasterizer.set_projection(get_projection_matrix(
+        45.0,
+        WIDTH as f32 / HEIGHT as f32,
+        0.1,
+        50.0,
+    ));
+    rasterizer.draw(pos_id, ind_id, Primitive::Triangle);
 }
 
 fn get_view_matrix(eye_pos: Vec3) -> Mat4 {
