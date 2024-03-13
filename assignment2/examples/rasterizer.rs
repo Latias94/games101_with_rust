@@ -1,7 +1,7 @@
-use crate::color::Color;
-use crate::triangle::Triangle;
+use assignment2::color::Color;
+use assignment2::triangle::Triangle;
 use bitflags::bitflags;
-use nalgebra_glm::{vec4, Mat4, Vec3, Vec4};
+use nalgebra_glm::{vec4, Mat4, UVec2, Vec3, Vec4};
 use std::collections::HashMap;
 
 pub struct Rasterizer {
@@ -87,8 +87,9 @@ impl Rasterizer {
     }
 
     fn inside_triangle(&self, x: u32, y: u32, v: [Vec4; 3]) -> bool {
-        // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
-        todo!()
+        // check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
+        let (alpha, beta, gamma) = self.compute_barycentric2d(x, y, v);
+        alpha >= 0.0 && beta >= 0.0 && gamma >= 0.0
     }
 
     /// 计算点相对于三角形顶点的重心坐标。
@@ -232,7 +233,7 @@ impl Rasterizer {
         bytemuck::cast_slice(&self.frame_buf)
     }
 
-    // bresenhams line algorithm
+    /// bresenhams line algorithm
     pub fn draw_line(&mut self, begin: Vec3, end: Vec3, color: Color) {
         let mut x0 = begin.x as i32;
         let mut y0 = begin.y as i32;
@@ -269,21 +270,53 @@ impl Rasterizer {
 
     fn rasterize_triangle(&mut self, t: &Triangle) {
         let v = t.to_vector4();
-        // TODO : Find out the bounding box of current triangle.
+        // Find out the bounding box of current triangle.
         // iterate through the pixel and find if the current pixel is inside the triangle
+        let bbox_min = UVec2::new(
+            v.iter()
+                .map(|vertex| vertex.x)
+                .reduce(f32::min)
+                .unwrap()
+                .floor() as u32,
+            v.iter()
+                .map(|vertex| vertex.y)
+                .reduce(f32::min)
+                .unwrap()
+                .floor() as u32,
+        );
+        let bbox_max = UVec2::new(
+            v.iter()
+                .map(|vertex| vertex.x)
+                .reduce(f32::max)
+                .unwrap()
+                .ceil() as u32,
+            v.iter()
+                .map(|vertex| vertex.y)
+                .reduce(f32::max)
+                .unwrap()
+                .ceil() as u32,
+        );
+        for x in bbox_min.x..=bbox_max.x {
+            for y in bbox_min.y..=bbox_max.y {
+                let inside = self.inside_triangle(x, y, v);
+                if inside {
+                    // to get the interpolated z value
+                    let (alpha, beta, gamma) = self.compute_barycentric2d(x, y, v);
+                    let w_reciprocal = 1.0 / (alpha / v[0].w + beta / v[1].w + gamma / v[2].w);
+                    let z_interpolated =
+                        alpha * v[0].z / v[0].w + beta * v[1].z / v[1].w + gamma * v[2].z / v[2].w;
+                    let z_interpolated = z_interpolated * w_reciprocal;
 
-        // If so, use the following code to get the interpolated z value.
-        // let (alpha, beta, gamma) = self.compute_barycentric2d(0, 0, t.to_vector4());
-        // let w_reciprocal = 1.0 / (alpha / v[0].w + beta / v[1].w + gamma / v[2].w);
-        // let z_interpolated =
-        //     alpha * v[0].z / v[0].w + beta * v[1].z / v[1].w + gamma * v[2].z / v[2].w;
-        // let z_interpolated = z_interpolated * w_reciprocal;
-        // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
-        todo!()
+                    // set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
+                    let color = t.color();
+                    self.set_pixel(x, y, color, z_interpolated);
+                }
+            }
+        }
     }
 
-    #[allow(dead_code)]
     fn get_index(&self, x: u32, y: u32) -> usize {
+        // flip y
         ((self.height - 1 - y) * self.width + x) as usize
     }
 

@@ -1,4 +1,5 @@
-use assignment2::rasterizer::{Buffers, IndBufId, PosBufId, Primitive, Rasterizer};
+use assignment2::color::Color;
+use assignment2::rasterizer::{Buffers, ColBufId, IndBufId, PosBufId, Primitive, Rasterizer};
 use minifb::{Key, Window, WindowOptions};
 use nalgebra_glm::{vec3, Mat4, TVec3, Vec3};
 use std::env;
@@ -6,7 +7,7 @@ use std::env;
 const WIDTH: usize = 700;
 const HEIGHT: usize = 700;
 
-const TITLE: &str = "Assignment 2";
+const TITLE: &str = "Assignment 1";
 
 fn main() {
     let mut angle = 0f32;
@@ -23,20 +24,36 @@ fn main() {
 
     let mut rasterizer = Rasterizer::new(WIDTH as u32, HEIGHT as u32);
     let eye_pos = vec3(0.0, 0.0, 5.0);
+
     let pos = [
         vec3(2.0, 0.0, -2.0),
         vec3(0.0, 2.0, -2.0),
         vec3(-2.0, 0.0, -2.0),
+        vec3(3.5, -1.0, -5.0),
+        vec3(2.5, 1.5, -5.0),
+        vec3(-1.0, 0.5, -5.0),
     ]
     .to_vec();
-    let ind = [vec3(0.0, 1.0, 2.0)].to_vec();
+
+    let ind = [vec3(0.0, 1.0, 2.0), vec3(3.0, 4.0, 5.0)].to_vec();
+
+    let cols = [
+        Color::new_rgb(217, 238, 185),
+        Color::new_rgb(217, 238, 185),
+        Color::new_rgb(217, 238, 185),
+        Color::new_rgb(185, 217, 238),
+        Color::new_rgb(185, 217, 238),
+        Color::new_rgb(185, 217, 238),
+    ]
+    .to_vec();
 
     let pos_id = rasterizer.load_positions(pos);
     let ind_id = rasterizer.load_indices(ind);
+    let col_id = rasterizer.load_colors(cols);
 
     // render to file
     if command_line {
-        draw(&mut rasterizer, angle, eye_pos, pos_id, ind_id);
+        draw(&mut rasterizer, angle, eye_pos, pos_id, ind_id, col_id);
         rasterizer.save_framebuffer_to_png(filename).unwrap();
         return;
     }
@@ -54,7 +71,7 @@ fn main() {
     window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
     // let mut buffer = vec![0u32; WIDTH * HEIGHT];
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        draw(&mut rasterizer, angle, eye_pos, pos_id, ind_id);
+        draw(&mut rasterizer, angle, eye_pos, pos_id, ind_id, col_id);
         let buffer = rasterizer
             .framebuffer()
             .iter()
@@ -64,9 +81,9 @@ fn main() {
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
 
         if window.is_key_down(Key::A) {
-            angle += 0.1;
+            angle += 0.5;
         } else if window.is_key_down(Key::D) {
-            angle -= 0.1;
+            angle -= 0.5;
         }
     }
 }
@@ -77,6 +94,7 @@ fn draw(
     eye_pos: TVec3<f32>,
     pos_id: PosBufId,
     ind_id: IndBufId,
+    col_id: ColBufId,
 ) {
     rasterizer.clear(Buffers::all());
     rasterizer.set_model(get_model_matrix(angle));
@@ -87,13 +105,17 @@ fn draw(
         0.1,
         50.0,
     ));
-    rasterizer.draw(pos_id, ind_id, Primitive::Triangle);
+    rasterizer.draw(pos_id, ind_id, col_id, Primitive::Triangle);
 }
 
 fn get_view_matrix(eye_pos: Vec3) -> Mat4 {
     let mut view = Mat4::identity();
-    let translate = Mat4::new_translation(&-eye_pos);
-    view = translate * view;
+    view[(0, 3)] = -eye_pos.x;
+    view[(1, 3)] = -eye_pos.y;
+    view[(2, 3)] = -eye_pos.z;
+
+    // let translate = Mat4::new_translation(&-eye_pos);
+    // let view = translate * view;
     view
 }
 

@@ -64,9 +64,9 @@ fn main() {
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
 
         if window.is_key_down(Key::A) {
-            angle += 0.1;
+            angle += 0.5;
         } else if window.is_key_down(Key::D) {
-            angle -= 0.1;
+            angle -= 0.5;
         }
     }
 }

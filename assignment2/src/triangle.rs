@@ -57,6 +57,14 @@ impl Triangle {
         self.color[index] = color;
     }
 
+    pub fn color(&self) -> Color {
+        self.color[0]
+    }
+
+    pub fn color_by_barycentric2d(&self, alpha: f32, beta: f32, gamma: f32) -> Color {
+        self.color[0] * alpha + self.color[1] * beta + self.color[2] * gamma
+    }
+
     pub fn to_vector4(&self) -> [Vec4; 3] {
         [
             Vec4::new(self.v[0].x, self.v[0].y, self.v[0].z, 1.0),
